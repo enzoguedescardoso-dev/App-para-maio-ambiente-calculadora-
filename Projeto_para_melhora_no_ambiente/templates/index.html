@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EcoTracker — Calculadora de Impacto Ambiental</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    :root{
+        --verde-escuro: #1f6d4c;
+        --verde-medio: #3f9469;
+        --verde-claro: #eaf2e9;
+        --musgo: #d8e8d4;
+        --ambar: #c97b3b;
+        --vermelho: #b4452f;
+        --texto: #203026;
+        --texto-suave: #5a6b60;
+        --branco-verde: #f5faf6;
+        --sombra: 0 10px 30px rgba(31, 109, 76, 0.15);
+        --raio: 18px;
+    }
+ 
+    * { box-sizing: border-box; }
+ 
+    body{
+        margin: 0;
+        font-family: 'Inter', sans-serif;
+        color: var(--texto);
+        background: radial-gradient(circle at 15% 10%, rgba(63,148,105,0.12), transparent 40%), radial-gradient(circle at 85% 90%, rgba(201,123,59,0.10), transparent 45%), var(--verde-claro);
+        min-height: 100vh;
+        padding: 40px 16px 80px;
+    }
+ 
+    h1, h2, h3{ font-family: 'Fraunces', serif; margin: 0; }
+ 
+    .container{ max-width: 720px; margin: 0 auto; }
+ 
+    /* ---------------- HEADER ---------------- */
+    .cabecalho{ text-align: center; margin-bottom: 32px; position: relative; }
+    .cabecalho .selo{
+        display: inline-flex; align-items: center; gap: 8px; font-size: 13px;
+        text-transform: uppercase; letter-spacing: 0.12em; color: var(--verde-escuro);
+        background: var(--musgo); padding: 6px 14px; border-radius: 999px;
+        margin-bottom: 14px; font-weight: 600;
+    }
+    .cabecalho h1{
+        font-size: 40px; font-weight: 700; color: var(--verde-escuro);
+        display: flex; align-items: center; justify-content: center; gap: 10px;
+    }
+    .cabecalho .globo{ display: inline-block; animation: girar 8s linear infinite; }
+    @keyframes girar{ from{ transform: rotate(0deg); } to{ transform: rotate(360deg); } }
+    .cabecalho p{ color: var(--texto-suave); margin-top: 8px; font-size: 16px; }
+ 
+    /* ---------------- CARTÃO PRINCIPAL ---------------- */
+    .caixa{
+        background: var(--branco-verde); padding: 32px; border-radius: var(--raio);
+        box-shadow: var(--sombra); margin-bottom: 24px; animation: subir 0.6s ease both;
+    }
+    @keyframes subir{ from{ opacity: 0; transform: translateY(18px); } to{ opacity: 1; transform: translateY(0); } }
+ 
+    /* ---------------- GRUPOS DE PERGUNTAS ---------------- */
+    .grupo-titulo{
+        text-transform: uppercase; letter-spacing: 0.08em; font-size: 12px; font-weight: 700;
+        color: var(--verde-escuro); margin: 26px 0 14px; display: flex; align-items: center; gap: 8px;
+    }
+    .grupo-titulo:first-child{ margin-top: 0; }
+    .grupo-titulo::after{ content: ""; flex: 1; height: 1px; background: var(--musgo); }
+    .pergunta{ margin-bottom: 22px; text-align: left; }
+    .pergunta label.titulo-pergunta{
+        display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14.5px;
+        margin-bottom: 10px; line-height: 1.3;
+    }
+    .pergunta .icone-pergunta{ font-size: 20px; flex-shrink: 0; }
+    .linha-input{ display: flex; align-items: center; gap: 14px; }
+    input[type="range"]{
+        flex: 1; -webkit-appearance: none; height: 6px; border-radius: 4px;
+        background: var(--musgo); outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb{
+        -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%;
+        background: var(--verde-medio); border: 3px solid white;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.25); cursor: pointer; transition: transform 0.15s ease;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover{ transform: scale(1.15); }
+    input[type="number"]{
+        width: 64px; padding: 8px; text-align: center; border: 1px solid #cfe0d3;
+        border-radius: 10px; font-size: 15px; font-family: 'Inter', sans-serif; flex-shrink: 0;
+    }
+    .unidade{ font-size: 12px; color: var(--texto-suave); margin-top: 4px; }
+    button.calcular{
+        width: 100%; background: var(--verde-escuro); color: white; border: none;
+        padding: 14px 20px; border-radius: 12px; font-size: 16px; font-weight: 600;
+        font-family: 'Inter', sans-serif; cursor: pointer; margin-top: 12px;
+        transition: transform 0.15s ease, background 0.2s ease;
+    }
+    button.calcular:hover{ background: var(--verde-medio); transform: translateY(-2px); }
+    button.calcular:active{ transform: translateY(0); }
+ 
+    /* ---------------- PRÉVIA AO VIVO ---------------- */
+    .previa{
+        display: flex; align-items: center; justify-content: space-between; background: var(--musgo);
+        border-radius: 12px; padding: 12px 18px; margin-top: 18px; font-size: 14px;
+        color: var(--verde-escuro); font-weight: 600; gap: 10px; flex-wrap: wrap;
+    }
+    .previa span#previa-emoji{ font-size: 20px; margin-right: 6px; }
+ 
+    /* ---------------- RESULTADO ---------------- */
+    .resultado{ text-align: center; animation: subir 0.7s ease both; }
+    .resultado h2{ font-size: 26px; margin-bottom: 6px; }
+    .resultado.baixo h2{ color: var(--verde-escuro); }
+    .resultado.medio h2{ color: var(--ambar); }
+    .resultado.alto h2{ color: var(--vermelho); }
+    .resultado .subtitulo{ color: var(--texto-suave); margin-bottom: 24px; }
+ 
+    /* ---------------- GAUGE (MEDIDOR) ---------------- */
+    .gauge-wrap{ position: relative; width: 260px; margin: 0 auto 20px; }
+    .gauge-numero{
+        position: absolute; bottom: 6px; left: 0; right: 0; text-align: center;
+        font-family: 'Fraunces', serif; font-size: 34px; font-weight: 700;
+    }
+    .gauge-legenda{
+        display: flex; justify-content: space-between; font-size: 11px;
+        color: var(--texto-suave); margin-top: -6px; padding: 0 6px;
+    }
+ 
+    /* ---------------- PLANETA ANIMADO ---------------- */
+    .planeta-container{ display: flex; justify-content: center; margin: 10px 0 26px; }
+    .planeta{ position: relative; width: 110px; height: 110px; }
+    .planeta .corpo{
+        width: 100%; height: 100%; border-radius: 50%; display: flex; align-items: center;
+        justify-content: center; font-size: 46px;
+        box-shadow: inset -10px -10px 25px rgba(0,0,0,0.15), 0 0 25px rgba(0,0,0,0.08);
+        animation: flutuar 3.5s ease-in-out infinite;
+    }
+    .resultado.baixo .corpo{ background: radial-gradient(circle at 35% 30%, #7fd4a6, var(--verde-medio)); }
+    .resultado.medio .corpo{ background: radial-gradient(circle at 35% 30%, #f0c988, var(--ambar)); }
+    .resultado.alto .corpo{ background: radial-gradient(circle at 35% 30%, #e2937f, var(--vermelho)); }
+    @keyframes flutuar{ 0%, 100%{ transform: translateY(0); } 50%{ transform: translateY(-10px); } }
+    .anel{
+        position: absolute; border: 2px solid rgba(31,109,76,0.25); border-radius: 50%;
+        top: 50%; left: 50%; transform: translate(-50%, -50%); animation: pulsar 2.4s ease-out infinite;
+    }
+    .anel.a2{ animation-delay: 0.8s; }
+    .anel.a3{ animation-delay: 1.6s; }
+    @keyframes pulsar{ 0%{ width: 100%; height: 100%; opacity: 0.6; } 100%{ width: 180%; height: 180%; opacity: 0; } }
+    .particulas{ position: absolute; inset: -40px; pointer-events: none; overflow: visible; }
+    .particula{ position: absolute; font-size: 16px; opacity: 0; animation: subir-particula 3.2s ease-in forwards; }
+    @keyframes subir-particula{
+        0%{ opacity: 0; transform: translateY(20px) rotate(0deg); }
+        15%{ opacity: 1; }
+        100%{ opacity: 0; transform: translateY(-90px) rotate(160deg); }
+    }
+ 
+    /* ---------------- BARRAS DE CATEGORIA ---------------- */
+    .categorias{ text-align: left; margin-bottom: 26px; max-height: 420px; overflow-y: auto; padding-right: 4px; }
+    .categoria-item{ margin-bottom: 14px; }
+    .categoria-topo{
+        display: flex; justify-content: space-between; font-size: 13px; font-weight: 600;
+        margin-bottom: 5px; color: var(--texto); gap: 8px;
+    }
+    .barra-fundo{ background: var(--musgo); border-radius: 999px; height: 10px; overflow: hidden; }
+    .barra-preenchimento{ height: 100%; border-radius: 999px; width: 0%; transition: width 1.1s cubic-bezier(0.22, 1, 0.36, 1); }
+ 
+    /* ---------------- RECOMENDAÇÕES ---------------- */
+    .recomendacoes{ text-align: left; }
+    .recomendacoes h3{ font-size: 18px; margin-bottom: 14px; color: var(--verde-escuro); }
+    .cartao-recomendacao{
+        display: flex; gap: 14px; background: white; border-left: 4px solid var(--musgo);
+        border-radius: 12px; padding: 14px 16px; margin-bottom: 12px;
+        box-shadow: 0 4px 14px rgba(31,109,76,0.06); opacity: 0; transform: translateX(-12px);
+        animation: entrar-lado 0.5s ease forwards;
+    }
+    .cartao-recomendacao.alto{ border-left-color: var(--vermelho); }
+    .cartao-recomendacao.medio{ border-left-color: var(--ambar); }
+    .cartao-recomendacao.baixo{ border-left-color: var(--verde-medio); }
+    @keyframes entrar-lado{ to{ opacity: 1; transform: translateX(0); } }
+    .cartao-recomendacao .icone{ font-size: 26px; flex-shrink: 0; }
+    .cartao-recomendacao p{ margin: 0; font-size: 13.5px; color: var(--texto-suave); line-height: 1.4; }
+    .cartao-recomendacao .pergunta-card{ font-family: 'Inter', sans-serif; font-weight: 700; font-size: 14.5px; color: var(--texto); margin-bottom: 4px; }
+    .cartao-recomendacao .resposta-card{ font-size: 12.5px; color: var(--verde-escuro); margin-bottom: 8px; }
+    .cartao-recomendacao.alto .resposta-card{ color: var(--vermelho); }
+    .cartao-recomendacao.medio .resposta-card{ color: var(--ambar); }
+    .cartao-recomendacao .alerta-card{ font-weight: 500; }
+    .refazer{
+        display: inline-block; margin-top: 22px; color: var(--verde-escuro); font-weight: 600;
+        text-decoration: none; font-size: 14px; border-bottom: 2px solid var(--verde-medio); padding-bottom: 2px;
+    }
+    .rodape{ text-align: center; color: var(--texto-suave); font-size: 12px; margin-top: 30px; }
+    @media (max-width: 480px){
+        .caixa{ padding: 22px; }
+        .cabecalho h1{ font-size: 30px; }
+        .gauge-wrap{ width: 210px; }
+    }
+</style>
+</head>
+<body>
+<div class="container">
+<div class="cabecalho">
+<div class="selo">Consciência ambiental em números</div>
+<h1><span class="globo">🌎</span> EcoTracker</h1>
+<p>Responda {{ categorias|length }} perguntas rápidas e descubra o impacto dos seus hábitos no planeta.</p>
+</div>
+<div class="caixa">
+<form method="POST" id="formulario">
+<div class="grupo-titulo">🚦 Deslocamento e energia</div>
+{% for c in categorias %}
+{% if c.chave in ["carro", "luz", "arcondicionado", "transporte_sustentavel", "voos"] %}
+<div class="pergunta">
+<label class="titulo-pergunta"><span class="icone-pergunta">{{ c.icone }}</span> {{ c.pergunta }}</label>
+<div class="linha-input">
+<input type="range" min="{{ c.min }}" max="{{ c.max }}" value="{{ valores[c.chave] }}" id="slider-{{ c.chave }}">
+<input type="number" name="{{ c.chave }}" min="{{ c.min }}" max="{{ c.max }}" required value="{{ valores[c.chave] }}" id="numero-{{ c.chave }}">
+</div>
+<div class="unidade">{{ c.unidade }}</div>
+</div>
+{% endif %}
+{% endfor %}
+<div class="grupo-titulo">🍽️ Alimentação e consumo</div>
+{% for c in categorias %}
+{% if c.chave in ["carne", "desperdicio", "roupas", "plastico", "produtos_locais"] %}
+<div class="pergunta">
+<label class="titulo-pergunta"><span class="icone-pergunta">{{ c.icone }}</span> {{ c.pergunta }}</label>
+<div class="linha-input">
+<input type="range" min="{{ c.min }}" max="{{ c.max }}" value="{{ valores[c.chave] }}" id="slider-{{ c.chave }}">
+<input type="number" name="{{ c.chave }}" min="{{ c.min }}" max="{{ c.max }}" required value="{{ valores[c.chave] }}" id="numero-{{ c.chave }}">
+</div>
+<div class="unidade">{{ c.unidade }}</div>
+</div>
+{% endif %}
+{% endfor %}
+<div class="grupo-titulo">♻️ Água e resíduos</div>
+{% for c in categorias %}
+{% if c.chave in ["banho", "reciclagem", "compostagem", "agua_torneira"] %}
+<div class="pergunta">
+<label class="titulo-pergunta"><span class="icone-pergunta">{{ c.icone }}</span> {{ c.pergunta }}</label>
+<div class="linha-input">
+<input type="range" min="{{ c.min }}" max="{{ c.max }}" value="{{ valores[c.chave] }}" id="slider-{{ c.chave }}">
+<input type="number" name="{{ c.chave }}" min="{{ c.min }}" max="{{ c.max }}" required value="{{ valores[c.chave] }}" id="numero-{{ c.chave }}">
+</div>
+<div class="unidade">{{ c.unidade }}</div>
+</div>
+{% endif %}
+{% endfor %}
+<div class="grupo-titulo">📱 Consumo digital e diversos</div>
+{% for c in categorias %}
+{% if c.chave in ["compras_online", "streaming", "papel", "eletronicos", "arvores"] %}
+<div class="pergunta">
+<label class="titulo-pergunta"><span class="icone-pergunta">{{ c.icone }}</span> {{ c.pergunta }}</label>
+<div class="linha-input">
+<input type="range" min="{{ c.min }}" max="{{ c.max }}" value="{{ valores[c.chave] }}" id="slider-{{ c.chave }}">
+<input type="number" name="{{ c.chave }}" min="{{ c.min }}" max="{{ c.max }}" required value="{{ valores[c.chave] }}" id="numero-{{ c.chave }}">
+</div>
+<div class="unidade">{{ c.unidade }}</div>
+</div>
+{% endif %}
+{% endfor %}
+<button type="submit" class="calcular">Calcular meu impacto 🌱</button>
+<div class="previa">
+<span><span id="previa-emoji">🌍</span>Prévia em tempo real:</span>
+<span id="previa-texto">preencha os campos acima</span>
+</div>
+</form>
+</div>
+{% if resultado %}
+<div class="caixa resultado {{ resultado.nivel }}">
+<div class="planeta-container">
+<div class="planeta">
+<div class="anel"></div>
+<div class="anel a2"></div>
+<div class="anel a3"></div>
+<div class="corpo">{{ resultado.emoji }}</div>
+<div class="particulas" id="particulas"></div>
+</div>
+</div>
+<h2>{{ resultado.emoji }} {{ resultado.titulo }}</h2>
+<p class="subtitulo">{{ resultado.mensagem }}</p>
+<div class="gauge-wrap">
+<svg viewBox="0 0 200 110" width="100%">
+<path d="M 10 100 A 90 90 0 0 1 190 100" fill="none" stroke="#d8e8d4" stroke-width="16" stroke-linecap="round"/>
+<path id="arco-gauge" d="M 10 100 A 90 90 0 0 1 190 100" fill="none" stroke="{{ resultado.cor_gauge }}" stroke-width="16" stroke-linecap="round" stroke-dasharray="283" stroke-dashoffset="283"/>
+</svg>
+<div class="gauge-numero">{{ resultado.pontos }}</div>
+</div>
+<div class="gauge-legenda">
+<span>0 (ideal)</span>
+<span>{{ resultado.maximo_visual }}+ (crítico)</span>
+</div>
+<div class="categorias">
+{% for b in resultado.barras %}
+<div class="categoria-item">
+<div class="categoria-topo">
+<span>{{ b.icone }} {{ b.rotulo }}</span>
+<span>{{ '-' if b.bonus else '' }}{{ b.pts }} pts</span>
+</div>
+<div class="barra-fundo">
+<div class="barra-preenchimento" style="background: {{ b.cor }};" data-largura="{{ b.pct }}"></div>
+</div>
+</div>
+{% endfor %}
+</div>
+<div class="recomendacoes">
+<h3>🌿 Recomendações para melhorar a saúde do planeta</h3>
+{% for r in recomendacoes %}
+<div class="cartao-recomendacao {{ r.nivel }}" style="animation-delay: {{ loop.index0 * 0.08 }}s">
+<div class="icone">{{ r.icone }}</div>
+<div>
+<p class="pergunta-card">{{ r.pergunta }}</p>
+<p class="resposta-card">Resposta: <strong>{{ r.resposta }}</strong></p>
+<p class="alerta-card">{{ r.texto }}</p>
+</div>
+</div>
+{% endfor %}
+</div>
+<a class="refazer" href="/">↺ Refazer cálculo</a>
+</div>
+{% endif %}
+<div class="rodape">EcoTracker · feito para te ajudar a cuidar melhor do planeta 🌍</div>
+</div>
+<script>
+const CATEGORIAS = {{ categorias_json | safe }};
+const FAIXA_BAIXO = {{ faixa_baixo }};
+const FAIXA_MEDIO = {{ faixa_medio }};
+ 
+function travar(valor, min, max){
+    if(Number.isNaN(valor)) return min;
+    return Math.min(Math.max(valor, min), max);
+}
+ 
+function sincronizar(chave){
+    const slider = document.getElementById("slider-" + chave);
+    const numero = document.getElementById("numero-" + chave);
+    if(!slider || !numero) return;
+ 
+    const min = parseInt(numero.min, 10);
+    const max = parseInt(numero.max, 10);
+ 
+    slider.addEventListener("input", () => {
+        numero.value = slider.value;
+        atualizarPrevia();
+    });
+    numero.addEventListener("input", () => {
+        const v = travar(parseInt(numero.value, 10), min, max);
+        numero.value = v;
+        slider.value = v;
+        atualizarPrevia();
+    });
+}
+CATEGORIAS.forEach(c => sincronizar(c.chave));
+ 
+function atualizarPrevia(){
+    let total = 0;
+    CATEGORIAS.forEach(c => {
+        const el = document.getElementById("numero-" + c.chave);
+        if(!el) return;
+        const v = parseInt(el.value || "0", 10);
+        const pts = v * c.peso;
+        total += c.bonus ? -pts : pts;
+    });
+    total = Math.max(0, total);
+ 
+    const emojiEl = document.getElementById("previa-emoji");
+    const textoEl = document.getElementById("previa-texto");
+ 
+    let emoji = "🌍", texto = "";
+    if(total <= FAIXA_BAIXO){
+        emoji = "✅";
+        texto = "Impacto estimado: BAIXO (" + total + " pts)";
+    } else if(total <= FAIXA_MEDIO){
+        emoji = "⚠️";
+        texto = "Impacto estimado: MÉDIO (" + total + " pts)";
+    } else {
+        emoji = "❌";
+        texto = "Impacto estimado: ALTO (" + total + " pts)";
+    }
+ 
+    emojiEl.textContent = emoji;
+    textoEl.textContent = texto;
+}
+atualizarPrevia();
+ 
+window.addEventListener("load", () => {
+    const arco = document.getElementById("arco-gauge");
+    if(arco){
+        const percentual = Number("{{ resultado.percentual_gauge if resultado else 0 }}");
+        const perimetro = 283;
+        const offsetFinal = perimetro - (perimetro * percentual / 100);
+        requestAnimationFrame(() => {
+            arco.style.transition = "stroke-dashoffset 1.2s cubic-bezier(0.22, 1, 0.36, 1)";
+            arco.style.strokeDashoffset = offsetFinal;
+        });
+    }
+ 
+    document.querySelectorAll(".barra-preenchimento").forEach((barra) => {
+        const largura = barra.getAttribute("data-largura");
+        requestAnimationFrame(() => {
+            barra.style.width = largura + "%";
+        });
+    });
+ 
+    const container = document.getElementById("particulas");
+    if(container){
+        const nivel = "{{ resultado.nivel if resultado else '' }}";
+        let simbolo = null;
+        if(nivel === "baixo") simbolo = "🍃";
+        else if(nivel === "alto") simbolo = "💨";
+ 
+        if(simbolo){
+            for(let i = 0; i < 8; i++){
+                const p = document.createElement("span");
+                p.className = "particula";
+                p.textContent = simbolo;
+                p.style.left = (10 + Math.random() * 80) + "%";
+                p.style.bottom = "10px";
+                p.style.animationDelay = (Math.random() * 2) + "s";
+                p.style.fontSize = (12 + Math.random() * 10) + "px";
+                container.appendChild(p);
+            }
+        }
+    }
+});
+</script>
+</body>
+</html>
